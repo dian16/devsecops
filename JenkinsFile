@@ -7,7 +7,7 @@ pipeline {
         FRONTEND_IMAGE = "dayen/web-app-frontend"
         IMAGE_TAG_BACKEND = "1.2"
         IMAGE_TAG_FRONTEND = "1.6"
-        KUBE_CONFIG = credentials('admin.conf (kubernetes)')    // Simpan kubeconfig di Jenkins Credentials
+        KUBE_CONFIG = credentials('d9f65c47-b45e-4939-843f-a57acf119809')    // Simpan kubeconfig di Jenkins Credentials
     }
 
     stages {
@@ -46,7 +46,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    withKubeConfig([credentialsId: 'admin.conf (kubernetes)']) {
+                    withKubeConfig([credentialsId: 'd9f65c47-b45e-4939-843f-a57acf119809']) {
                         sh """
                             kubectl apply -f k8s/backend-deployment.yaml
                             kubectl apply -f k8s/frontend-deployment.yaml
