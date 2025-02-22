@@ -10,7 +10,7 @@ pipeline {
         KUBE_CONFIG = credentials('admin.conf (kubernetes)')    // Simpan kubeconfig di Jenkins Credentials
     }
 
-    // stages {
+    stages {
     //     stage('Checkout Code') {
     //         steps {
     //             git 'https://github.com/dian16/devsecops.git'  // Ganti dengan repo GitLab kamu
