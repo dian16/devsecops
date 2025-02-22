@@ -1,27 +1,58 @@
 pipeline {
-    agent {
-        kubernetes {
-            yaml '''
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    some-label: some-value
-spec:
-  containers:
-  - name: kubectl
-    image: bitnami/kubectl:latest
-    command:
-    - cat
-    tty: true
-            '''
-        }
+    agent any
+
+    environment {
+        REGISTRY = "docker.io"                      // Ganti dengan registry yang digunakan
+        BACKEND_IMAGE = "dayen/web-app-backend"
+        FRONTEND_IMAGE = "dayen/web-app-frontend"
+        IMAGE_TAG_BACKEND = "1.2"
+        IMAGE_TAG_FRONTEND = "1.6"
+        KUBE_CONFIG = credentials('admin.conf (kubernetes)')    // Simpan kubeconfig di Jenkins Credentials
     }
+
     stages {
-        stage('Check Kubernetes') {
+        stage('Checkout Code') {
             steps {
-                container('kubectl') {
-                    sh 'kubectl get nodes'
+                git 'https://github.com/dian16/devsecops.git'  // Ganti dengan repo GitLab kamu
+            }
+        }
+
+        stage('Build and Push Backend') {
+            steps {
+                script {
+                    docker.withRegistry("https://${REGISTRY}", "docker-credentials") {
+                        sh """
+                            docker build -t ${REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG_BACKEND} ./backend
+                            docker push ${REGISTRY}/${BACKEND_IMAGE}:${IMAGE_TAG_BACKEND}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Build and Push Frontend') {
+            steps {
+                script {
+                    docker.withRegistry("https://${REGISTRY}", "docker-credentials") {
+                        sh """
+                            docker build -t ${REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG_FRONTEND} ./frontend
+                            docker push ${REGISTRY}/${FRONTEND_IMAGE}:${IMAGE_TAG_FRONTEND}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    withKubeConfig([credentialsId: 'admin.conf (kubernetes)']) {
+                        sh """
+                            kubectl apply -f k8s/backend-deployment.yaml
+                            kubectl apply -f k8s/frontend-deployment.yaml
+                            kubectl apply -f k8s/database-deployment.yaml
+                        """
+                    }
                 }
             }
         }
